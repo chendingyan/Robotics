@@ -24,46 +24,63 @@ w_h = [p_H, p_O, "H-O"]
 
 list_wall = [w_a, w_b, w_c, w_d, w_e, w_f, w_g, w_h]
 
+def find_mm(angle_list):
+    min = 370
+    max = -370
+    for item in angle_list:
+        if item > 0 and item < min:
+            min = item
+        elif item < 0 and item > max:
+            max = item
+    print(min, max)
+    if max == -370:
+        max = 0
+        for item in angle_list:
+            if item > max:
+                max = item
+    elif min == 370:
+        min = 0
+        for item in angle_list:
+            if item < min:
+                min = item
+    return min, max
+
+def find_point_index(point_list, angle_list, min, max):
+    min_index = angle_list.index(min)
+    max_index = angle_list.index(max)
+    print(min_index, max_index)
+    if abs(max_index - min_index) == 1:
+        return point_list[max_index], point_list[min_index]
+    elif (max_index == 2 and min_index == 4) or (max_index == 2 and min_index == 4):
+        return point_list[max_index], point_list[min_index]
+    elif (max_index == 0 and min_index == 8) or (max_index == 8 and min_index == 0):
+        return point_list[max_index], point_list[min_index]
+    else:
+        angle_list[max_index] = -370
+        min, max = find_mm(angle_list)
+        return find_point_index(point_list, angle_list, min, max)
 
 def find_walls(x, y, theta):
-    # theta in degrees
 
-    # theta = math.degrees(theta)
 
     possible_w = list()
-
-    for item in list_wall:
-        print("I am doing~~~~~~~~~~~~")
-        print(item)
-        angle_p1 = math.atan2((item[0][1]-y), (item[0][0]-x))
-        angle_p1 = math.degrees(angle_p1)
-        if angle_p1 < 0:
-            angle_p1+=360
-        # print((item[0][1]-y), (item[0][0]-x))
-
-        #angle_p1 = angle_p1 % (2*math.pi)
-        angle_p2 = math.atan2((item[1][1]-y), (item[1][0]-x))
-        angle_p2 = math.degrees(angle_p2)
-        if angle_p2 < 0:
-            angle_p2+=360
-        #print("hi", (item[1][1]-y),  (item[1][0]-x))
-        #angle_p2 = angle_p2 % (2*math.pi)
-        print(angle_p1, angle_p2)
-        # if theta >= angle_p1
-        # if theta in angle_range:
-        #     possible_w.append(item)
-        # if (theta > angle_p1 and theta < angle_p2) or (theta > angle_p2 and theta < angle_p1):
-        print(theta - angle_p1)
-        if (theta - angle_p1 <= 0 and theta - angle_p2 >= 0):
-            possible_w.append(item)
-        elif (theta - angle_p2 <= 0 and theta - angle_p1 >=0):
-            possible_w.append(item)
-        # if (theta-angle_p1) * (theta - angle_p2) <= 0:
-        #     # check if the robot and the wall are parallel..
-        #     print('checking, ', math.atan2(item[0][1] - item[1][1], item[0][0] - item[1][0]))
-        #     if math.atan2(item[0][1] - item[1][1], item[0][0] - item[1][0])% math.pi != theta % math.pi:
-        #         possible_w.append(item)
-    return possible_w
+    max_angle = 0
+    point_list = [p_O, p_A, p_B, p_C, p_D, p_E, p_F, p_G, p_H]
+    angle_list = list()
+    for item in point_list:
+        angle = math.atan2(item[1] - y, item[0] - x)
+        angle = math.degrees(angle) % 360
+        angle_list.append(angle)
+        if angle > max_angle:
+            max_angle = angle
+    res = 360 - max_angle
+    print(angle_list)
+    for i in range(len(angle_list)):
+        angle_list[i] -=theta
+    print(angle_list)
+    min, max = find_mm(angle_list)
+    p1 ,p2 = find_point_index(point_list, angle_list, min, max)
+    return p1 ,p2
 
 
 def decide_walls():
@@ -73,4 +90,4 @@ def decide_walls():
 
 if __name__ == "__main__":
 
-    print(find_walls(1, 1, 90))
+    print(find_walls(90, 90, 270))
