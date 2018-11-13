@@ -88,6 +88,56 @@ def decide_walls():
     pass
 
 
+def calculate_m(x, y, theta, s_read):
+    sigma_s = 0.5       # user-defined Gaussian variance
+    const_K = 0         # a constant K added as its tail (lecture notes p21)
+
+    pt1, pt2 = find_walls(x, y, theta)
+
+    # distance to wall
+    den_m = (pt2[1] - pt1[1]) * math.cos(math.radians(theta)) - (pt2[0] - pt1[0]) * math.sin(math.radians(theta))
+    num_m = (pt2[1] - pt1[1]) * (pt1[0] - x) - (pt2[0] - pt1[0]) * (pt1[1] - y)
+    m = num_m / den_m
+    print("actual distance to the wall m =", m)
+    return math.exp(-(s_read - m) ** 2 / (2 * sigma_s ** 2)) + const_K
+
+def normalize():
+
+    pass
+
 if __name__ == "__main__":
 
-    print(find_walls(90, 90, 270))
+    robot_local = [168, 42, 44]     # x, y, theta
+    sensor_reading = 59
+
+    print(find_walls(robot_local[0], robot_local[1], robot_local[2]))
+    print("likelihood =", calculate_m(robot_local[0], robot_local[1], robot_local[2], sensor_reading))
+
+    # number of particles
+    N = 2
+    particle_set = [(168, 42, 44, 0.8), (168, 0, 44, 0.2)]
+
+    # update each particle 's likelihood (weight)
+    new_p_set = list()
+    sum_weight = 0
+
+    for p in particle_set:
+        new_likelihood = calculate_m(p[0], p[1], p[2], sensor_reading)
+        print('m = ', new_likelihood)
+        sum_weight += new_likelihood
+        new_p = (p[0], p[1], p[2], new_likelihood)
+        new_p_set.append(new_p)
+    particle_set = new_p_set
+
+    print(particle_set)
+
+    # normalizing
+    new_p_set = list()
+    for p in particle_set:
+        p3 = p[3]/sum_weight
+        new_p = (p[0], p[1], p[2], p3)
+        new_p_set.append(new_p)
+    particle_set = new_p_set
+
+    print(particle_set)
+
