@@ -1,7 +1,0 @@
-motor_angle_360.0Ki_value_100
-motor_angle_360.0Ki_value_200
-motor_angle_360.0Ki_value_300
-motor_angle_360.0Ki_value_400
-motor_angle_360.0Ki_value_500
-motor_angle_360.0Ki_value_600
-motor_angle_360.0Ki_value_700

@@ -2,8 +2,10 @@ import brickpi
 import time
 import json
 import math
+
+
 class Car:
-    def __init__(self, interface, touch_port, sonar_port):
+    def __init__(self, interface):
         # touch_port and sonar_port
         self.interface = interface
         self.motors = [0,2]
@@ -12,6 +14,8 @@ class Car:
         self.interface.motorEnable(self.motors[1])
         self.touch_port = None
         self.sonar_port = None
+        self.diameter = 4.3
+        self.distance_wheels = 7.15
         # Import parameters
         with open("parameter.json", "r") as f:
             params = json.load(f)
@@ -38,15 +42,15 @@ class Car:
         self.motorParams["Right"].pidParameters.k_i = params["Right"]["pidParameters.k_i"]
         self.motorParams["Right"].pidParameters.k_d = params["Right"]["pidParameters.k_d"]
 
-        self.interface.setMotorAngleControllerParameters(self.motors[0], self.motorParams["Left"] )
+        self.interface.setMotorAngleControllerParameters(self.motors[0], self.motorParams["Left"])
         self.interface.setMotorAngleControllerParameters(self.motors[1], self.motorParams["Right"])
 
     def moveForward(self, speed):
         self.interface.setMotorRotationSpeedReferences(self.motors, [speed, speed])
 
     def wheel_rotate(self, angle, name):
-        self.interface.startLogging("logs/Original/"+name + ".log")
-        self.interface.increaseMotorAngleReferences(self.motors,[angle, angle])
+        self.interface.startLogging("logs/Original/" + name + ".log")
+        self.interface.increaseMotorAngleReferences(self.motors, [angle, angle])
         while not self.interface.motorAngleReferencesReached(self.motors):
             motorAngles = self.interface.getMotorAngles(self.motors)
             if motorAngles:
@@ -55,10 +59,9 @@ class Car:
         print "Destination reached!"
         self.interface.stopLogging()
 
-
     def left90(self):
-        angle = 5.0176
-        resistance = 0.45
+        angle = self.distance_wheels / (4 * self.diameter)
+        resistance = 0.1
         angle += resistance
         self.interface.increaseMotorAngleReferences(self.motors, [angle, -angle])
         while not self.interface.motorAngleReferencesReached(self.motors):
@@ -68,26 +71,26 @@ class Car:
     def moveLeft(self, angle):
         pass
 
-    def moveright(self,angle):
+    def moveright(self, angle):
         self.moveLeft(-angle)
 
     def moveDistance(self, distance):
-        C = 13.502
-        loop = distance/C
+        C = math.pi * self.diameter
+        loop = distance / C
         angle = loop * 2 * math.pi
+        resistance = 0.3
+        angle += resistance
         self.interface.increaseMotorAngleReferences(self.motors, [angle, angle])
         while not self.interface.motorAngleReferencesReached(self.motors):
             motorAngles = self.interface.getMotorAngles(self.motors)
         print "Destination reached!"
- 
+
     def rotate(self, angle):
-        #postive angle means turn left
-        angle = angle/90 * 5.0176
-        resistance = 0.5
-        angle += resistance
+        # postive angle means turn left
+        angle = 2 * self.distance_wheels/self.diameter * angle /360 *2 * math.pi
+        resistance = 1.5
+        angle = angle * resistance
         self.interface.increaseMotorAngleReferences(self.motors, [angle, -angle])
         while not self.interface.motorAngleReferencesReached(self.motors):
             motorAngles = self.interface.getMotorAngles(self.motors)
-
-    def navigatieToWaypoint(self, float x, float y):
-
+        print "Destination reached!"

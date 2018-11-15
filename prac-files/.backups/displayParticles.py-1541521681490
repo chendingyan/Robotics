@@ -1,7 +1,7 @@
 import brickpi
 import time
 import sys
-from BrickPi.Utility import Car
+from Utility import Car
 import newFile
 import random
 interface=brickpi.Interface()

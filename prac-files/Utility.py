@@ -2,8 +2,10 @@ import brickpi
 import time
 import json
 import math
+
+
 class Car:
-    def __init__(self, interface, touch_port, sonar_port):
+    def __init__(self, interface):
         # touch_port and sonar_port
         self.interface = interface
         self.motors = [0,2]
@@ -12,6 +14,11 @@ class Car:
         self.interface.motorEnable(self.motors[1])
         self.touch_port = None
         self.sonar_port = None
+        self.diameter = 4.3
+        self.distance_wheels = 6.8
+        self.current_x = 0.0
+        self.current_y = 0.0
+        self.current_theta = 0.0
         # Import parameters
         with open("parameter.json", "r") as f:
             params = json.load(f)
@@ -38,15 +45,15 @@ class Car:
         self.motorParams["Right"].pidParameters.k_i = params["Right"]["pidParameters.k_i"]
         self.motorParams["Right"].pidParameters.k_d = params["Right"]["pidParameters.k_d"]
 
-        self.interface.setMotorAngleControllerParameters(self.motors[0], self.motorParams["Left"] )
+        self.interface.setMotorAngleControllerParameters(self.motors[0], self.motorParams["Left"])
         self.interface.setMotorAngleControllerParameters(self.motors[1], self.motorParams["Right"])
 
     def moveForward(self, speed):
         self.interface.setMotorRotationSpeedReferences(self.motors, [speed, speed])
 
     def wheel_rotate(self, angle, name):
-        self.interface.startLogging("logs/Original/"+name + ".log")
-        self.interface.increaseMotorAngleReferences(self.motors,[angle, angle])
+        self.interface.startLogging("logs/Original/" + name + ".log")
+        self.interface.increaseMotorAngleReferences(self.motors, [angle, angle])
         while not self.interface.motorAngleReferencesReached(self.motors):
             motorAngles = self.interface.getMotorAngles(self.motors)
             if motorAngles:
@@ -55,10 +62,9 @@ class Car:
         print "Destination reached!"
         self.interface.stopLogging()
 
-
     def left90(self):
-        angle = 5.0176
-        resistance = 0.45
+        angle = self.distance_wheels / (4 * self.diameter)
+        resistance = 0.1
         angle += resistance
         self.interface.increaseMotorAngleReferences(self.motors, [angle, -angle])
         while not self.interface.motorAngleReferencesReached(self.motors):
@@ -68,26 +74,38 @@ class Car:
     def moveLeft(self, angle):
         pass
 
-    def moveright(self,angle):
+    def moveright(self, angle):
         self.moveLeft(-angle)
 
     def moveDistance(self, distance):
-        C = 13.502
-        loop = distance/C
+        C = math.pi * self.diameter
+        loop = distance / C
         angle = loop * 2 * math.pi
+        resistance = 0.2
+        angle += resistance
         self.interface.increaseMotorAngleReferences(self.motors, [angle, angle])
         while not self.interface.motorAngleReferencesReached(self.motors):
             motorAngles = self.interface.getMotorAngles(self.motors)
         print "Destination reached!"
- 
+
     def rotate(self, angle):
-        #postive angle means turn left
-        angle = angle/90 * 5.0176
-        resistance = 0.5
-        angle += resistance
+        # postive angle means turn left
+        angle = 2 * self.distance_wheels/self.diameter * angle /360 *2 * math.pi
+        resistance = 1.225
+        angle = angle * resistance
         self.interface.increaseMotorAngleReferences(self.motors, [angle, -angle])
         while not self.interface.motorAngleReferencesReached(self.motors):
             motorAngles = self.interface.getMotorAngles(self.motors)
-
-    def navigatieToWaypoint(self, float x, float y):
-
+        print "Destination reached!"
+        
+    def navigateToWaypoint(self, X, Y):
+        dx = X - self.current_x
+        dy = Y - self.current_y
+        theta_radians = math.atan2(dy,dx)
+        self.rotate(math.degrees(theta_radians) - self.current_theta)
+        time.sleep(0.5)
+        distance = math.sqrt(dx*dx + dy*dy)
+        self.moveDistance(distance*100)
+	self.current_x = X
+	self.current_y = Y
+	self.current_theta += math.degrees(theta_radians)

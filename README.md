@@ -21,3 +21,10 @@ We can use "Ziegler-Nichols" heuristic method to tune the PID parameter.</br>
 - [ ] Simple On/Off Forward/Backward Control with Touch Sensors
 - [ ] Forward/Backward Proportional Servoing with the Sonar Sensor
 - [ ] Wall Following
+
+## Week 4 questions
+
+In theory the minimum range should be 0cm and the maximum range is 254cm. After observation, we found that 255 means 
+it cannot detect the distance or something goes wrong. It always happens when we put the surface too close to the sensor 
+camera. And in reality, our sensor has minimum range about 7cm and it will detect mistake error when the distance 
+smaller than 3cm.

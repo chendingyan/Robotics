@@ -8,7 +8,7 @@ interface=brickpi.Interface()
 interface.initialize()
 sonar_port = None
 touch_port = None
-Robot = Car(interface)
+Robot = Car(interface, config_file='carpet_params.json')
 distance = 10
 newFile.DrawLines()
 e = 0
