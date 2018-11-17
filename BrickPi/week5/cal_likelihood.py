@@ -274,7 +274,7 @@ if __name__ == "__main__":
         list1[2] = 0.01
         new_particles.data[i] = tuple(list1)
 
-    print(new_particles.data)
-    time.sleep(1)
+    # print(new_particles.data)
+    time.sleep(0.5)
     new_particles.draw()
 
