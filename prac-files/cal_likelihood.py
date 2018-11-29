@@ -35,11 +35,11 @@ w_h = [p_H, p_O, "H-O"]
 list_wall = [w_a, w_b, w_c, w_d, w_e, w_f, w_g, w_h]
 # Functions to generate some dummy particles data:
 def calcX(cx):
-    return random.gauss(cx, 1)   # in cm
+    return random.gauss(cx, 3)   # in cm
 
 
 def calcY(cy):
-    return random.gauss(cy, 1)  # in cm
+    return random.gauss(cy, 3)  # in cm
 
 
 def calcW():
@@ -47,7 +47,7 @@ def calcW():
 
 
 def calcTheta(ct):
-    return random.gauss(ct, 1)
+    return random.gauss(ct, 2)
 
 
 # A Canvas class for drawing a map and particles:
@@ -181,7 +181,7 @@ def calculate_m(x, y, theta, s_read, particle_data):
     likelihood = list()
     zm = list()
     for i in range (len(particle_data)):
-        den_m = (pt2[1] - pt1[1]) * math.cos(math.radians(90)) - (pt2[0] - pt1[0]) * math.sin(math.radians(90))
+        den_m = (pt2[1] - pt1[1]) * math.cos(math.radians(theta)) - (pt2[0] - pt1[0]) * math.sin(math.radians(theta))
         num_m = (pt2[1] - pt1[1]) * (pt1[0] - particle_data[i][0]) - (pt2[0] - pt1[0]) * (pt1[1] - particle_data[i][1])
         m.append(num_m / den_m)
         zm.append(s_read[0] - m[i])
@@ -194,7 +194,6 @@ def calculate_m(x, y, theta, s_read, particle_data):
     const_K = 0.01 * max(likelihood)
     for i in range (len(particle_data)):
         likelihood[i] = likelihood[i] + const_K
-    print(np.mean(m))
     return likelihood
 
 def obtain_z():
@@ -211,7 +210,7 @@ def normalize(likelihood):
     for i in range(len(likelihood)):
         likelihood[i] = (likelihood[i] / sum_likelihood)* 100
     return likelihood
-    #print(likelihood)
+    
     #print(sum(likelihood))
     #print(max(likelihood))
 
@@ -232,7 +231,6 @@ def resampling(likelihood):
     return index_list
 
 if __name__ == "__main__":
-    
     canvas = Canvas()  # global canvas we are going to draw on
     mymap = Map()
     # Definitions of walls
@@ -253,87 +251,41 @@ if __name__ == "__main__":
     mymap.add_wall((210, 84, 210, 0))  # g
     mymap.add_wall((210, 0, 0, 0))  # h
     mymap.draw()
-    points = [[84, 30, 0],
-              [180, 30, 0],
-              [180, 54, 90],
-              [138, 54, 180],
-              [138, 168, 90],
-              [114, 168, 180],
-              [114, 84, 270],
-              [84, 84, 180],
-              [84, 30, 270]]
-    #thetas = [0, 0, 90, 90, -90, 90, 90, -90, 90]
-    Robot.current_x = points[0][0]
-    Robot.current_y = points[0][1]
-    last_theta = points[0][2]
-    Robot.current_theta = points[0][2]
+
+    #goal_x = float(input("input your Wx:"))
+    #goal_y = float(input("input your Wy:"))
+    Robot.current_x = 190
+    Robot.current_y = 10
+
+    Robot.current_theta = 0
+    #Robot.navigateToWaypoint(goal_x, goal_y)
+
+
+
+
     particles = Particles()
     particles.update()
     particles.draw()
-    goal_x = points[0][0]
-    goal_y = points[0][1]
-    points.pop(0)
+    #print(Robot.current_x, Robot.current_y, Robot.current_theta)
+    likelihood = calculate_m(Robot.current_x, Robot.current_y, Robot.current_theta, obtain_z(), particles.data)
+    #print(likelihood)
+    likelihood = normalize(likelihood)
+    print(likelihood)
+    print(sum(likelihood))
+    particles.draw()
+    index_list = resampling(likelihood)
+    particles.draw()
+    new_particles = Particles()
+    new_particles.update()
+    for i in range(0, particles.n):
+        new_particles.data[i] = particles.data[index_list[i]]
+        list1 = list(new_particles.data[i])
+        list1[2] = 0.01
+        new_particles.data[i] = tuple(list1)
+    time.sleep(1)
+    new_particles.draw()
+    sum_x = 0
+    sum_y = 0
+
     
-    # navigate
-    while len(points) != 0:
-        dest = points.pop(0)
-        Robot.current_theta = dest[2]
-        last_theta = dest[2]
-        #achieve one target point
-        while (goal_x != dest[0]) or (goal_y != dest[1]):
-            print('_________')
-            # go 20cm
-            if (math.fabs(dest[0] - goal_x) > 20 and (dest[2] == 0 or dest[2] == 180)) or (math.fabs(dest[1] - goal_y) > 20 and (dest[2] == 90 or dest[2] == 270)):
-                goal_x = goal_x + 20 * math.cos(dest[2]) 
-                goal_y = goal_y + 20 * math.sin(dest[2])
-                flag = 0
-            # go the rest of cm
-            else:
-                goal_x = dest[0]
-                goal_y = dest[1]
-                flag = 1
-            
-            Robot.navigateToWaypoint(goal_x, goal_y)   
-            Robot.current_x = goal_x
-            Robot.current_y = goal_y
-            s_read = obtain_z()
-            print(s_read[0])
-            # far from wall
-            if s_read[0] < 100:
-
-                likelihood = calculate_m(Robot.current_x, Robot.current_y, dest[2], obtain_z(), particles.data)
-                likelihood = normalize(likelihood)
-                index_list = resampling(likelihood)
-                new_particles = Particles()
-                new_particles.update()
-                #for i in range(0, particles.n):
-                #   new_particles.data[i] = particles.data[index_list[i]]
-                #    list1 = list(new_particles.data[i])
-                #    list1[2] = 0.01
-                #    new_particles.data[i] = tuple(list1)
-                particles = new_particles   
-                particles.draw()
-                sum_x = 0
-                sum_y = 0
-                for i in range (0, particles.n):
-                    sum_x = sum_x + particles.data[i][0] * 0.01
-                    sum_y += particles.data[i][1] * 0.01
-                print('Average is ')
-                print(sum_x, sum_y)
-                #print(s_read[0],'++')
-                Robot.current_x = sum_x
-                Robot.current_y = sum_y
-                print(goal_x, goal_y)
-                #if flag == 1:
-                  #  Robot.navigateToWaypoint(goal_x, goal_y)
-                print('Finish....')
-            else:
-
-                new_particles = Particles()
-                new_particles.update()
-                particles = new_particles   
-                particles.draw()
-                print('Finish....')
-        
-        time.sleep(0.5)
-    interface.terminate()
+    

@@ -91,21 +91,35 @@ class Car:
     def rotate(self, angle):
         # postive angle means turn left
         angle = 2 * self.distance_wheels/self.diameter * angle /360 *2 * math.pi
-        resistance = 1.225
+        #if -90 <= angle <= 90:
+        #    resistance = 1.225
+        #elif angle > 90 or angle <-90:
+        #    resistance = 1.1
+        resistance = 1.20
+        if angle < 0:
+            resistance += 0.18
         angle = angle * resistance
-        self.interface.increaseMotorAngleReferences(self.motors, [angle, -angle])
+        self.interface.increaseMotorAngleReferences(self.motors, [-angle, angle])
         while not self.interface.motorAngleReferencesReached(self.motors):
             motorAngles = self.interface.getMotorAngles(self.motors)
         print "Destination reached!"
         
     def navigateToWaypoint(self, X, Y):
+        
         dx = X - self.current_x
         dy = Y - self.current_y
+        self.current_x = X
+        self.current_y = Y
+        print(X, Y, self.current_x, self.current_y)
         theta_radians = math.atan2(dy,dx)
-        self.rotate(math.degrees(theta_radians) - self.current_theta)
+        print('theta_radians' + str(theta_radians))
+        self.rotate(self.current_theta)
+        self.current_theta = theta_radians
+        #self.cureent_theta = math.degrees(theta_radians) - self.current_theta
         time.sleep(0.5)
         distance = math.sqrt(dx*dx + dy*dy)
-        self.moveDistance(distance*100)
-	self.current_x = X
-	self.current_y = Y
-	self.current_theta += math.degrees(theta_radians)
+        self.moveDistance(distance)
+        self.current_theta = 0
+        #self.rotate(self.current_theta - math.degrees(theta_radians))
+        
+        
